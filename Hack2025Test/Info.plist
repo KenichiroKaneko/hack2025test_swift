@@ -6,5 +6,12 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>ローカルネットワーク上のプリクラ端末に接続するため</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
 </dict>
 </plist>
