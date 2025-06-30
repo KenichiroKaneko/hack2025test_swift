@@ -7,17 +7,16 @@
 
 import SwiftUI
 import SwiftData
-//import SwiftUe
+
 
 struct ContentView: View {
     var body: some View {
         NavigationStack {
             HStack {
-                navigationButtonView(destination: ContentView(), label: "Controller")
-                navigationButtonView(destination: ContentView(), label: "Camera")
+                navigationButtonView(destination: ControllerView(), label: "Controller")
+                navigationButtonView(destination: PlayView(), label: "Play")
             }
             .frame(maxWidth: .infinity)
-            .background(Color.gray)
             
         }
     }
@@ -26,8 +25,12 @@ struct ContentView: View {
         destination: Destination, label: String) -> some View {
             NavigationLink(destination: destination) {
                 Text(label)
-                    .padding(8)
-                    .background(in: RoundedRectangle(cornerRadius: 30))
+                    .frame(width: 120, height: 64)
+                    .background {
+                        RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.blue, lineWidth: 2)
+                    }
+                    .padding(.horizontal, 12)
             }
         }
 }
