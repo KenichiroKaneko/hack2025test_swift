@@ -14,7 +14,7 @@ struct ContentView: View {
         NavigationStack {
             HStack {
                 navigationButtonView(destination: ControllerView(), label: "Controller")
-                navigationButtonView(destination: PlayView(), label: "Play")
+                navigationButtonView(destination: PlayView2(), label: "Play")
             }
             .frame(maxWidth: .infinity)
             

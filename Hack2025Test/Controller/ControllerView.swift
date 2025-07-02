@@ -28,6 +28,7 @@ class WebSocketReceiver: ObservableObject {
 
     func listen() {
         task?.receive { [weak self] result in
+            print("receive: \(result)")
             switch result {
             case .success(.string(let str)):
                 if let data = str.data(using: .utf8),
@@ -38,8 +39,8 @@ class WebSocketReceiver: ObservableObject {
                             self?.count = count
                         }
                     }
-
-                    if let message = json["message"] as? String {
+                    
+                    if let message = json["body"] as? String {
                         DispatchQueue.main.async {
                             self?.message = message
                         }
@@ -95,7 +96,7 @@ struct ControllerView: View {
                     Text("アクティブなカメラ台数：\(receiver.count)")
 
                     Button {
-                        receiver.sendMessage(type: "connection", body: "接続しました")
+                        receiver.sendMessage(type: "message", body: "はじまったよ")
                     } label: {
                         Text("疎通確認ぼたん")
                     }

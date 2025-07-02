@@ -5,10 +5,13 @@
 //  Created by 健一郎金子 on 2025/07/02.
 //
 
+import UIKit
+import AVFoundation
+
 
 final class CameraViewModel2: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     @Published var capturedImage: UIImage?
-    let session = AVCaptureSession()
+    let cameraSession = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
 
     override init() {
@@ -17,24 +20,24 @@ final class CameraViewModel2: NSObject, ObservableObject, AVCapturePhotoCaptureD
     }
 
     private func configure() {
-        session.beginConfiguration()
-        session.sessionPreset = .photo
+        cameraSession.beginConfiguration()
+        cameraSession.sessionPreset = .photo
 
         guard
             let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
             let input = try? AVCaptureDeviceInput(device: device),
-            session.canAddInput(input),
-            session.canAddOutput(output)
+            cameraSession.canAddInput(input),
+            cameraSession.canAddOutput(output)
         else {
-            session.commitConfiguration()
+            cameraSession.commitConfiguration()
             return
         }
 
-        session.addInput(input)
-        session.addOutput(output)
-        session.commitConfiguration()
+        cameraSession.addInput(input)
+        cameraSession.addOutput(output)
+        cameraSession.commitConfiguration()
 
-        session.startRunning()
+        cameraSession.startRunning()
     }
 
     func capturePhoto() {

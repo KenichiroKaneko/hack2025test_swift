@@ -1,7 +1,15 @@
+//
+//  CameraPreviewView 2.swift
+//  Hack2025Test
+//
+//  Created by 健一郎金子 on 2025/07/02.
+//
+
+
 import SwiftUI
 import AVFoundation
 
-struct CameraPreviewView: UIViewRepresentable {
+struct CameraPreviewView2: UIViewRepresentable {
     let session: AVCaptureSession
 
     func makeUIView(context: Context) -> UIView {

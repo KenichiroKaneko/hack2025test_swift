@@ -1,6 +1,14 @@
+//
+//  CameraView 2.swift
+//  Hack2025Test
+//
+//  Created by 健一郎金子 on 2025/07/02.
+//
+
+
 import SwiftUI
 
-public struct CameraView: UIViewControllerRepresentable {
+public struct CameraView2: UIViewControllerRepresentable {
     @Binding private var image: UIImage?
 
     @Environment(\.dismiss) private var dismiss
@@ -26,11 +34,11 @@ public struct CameraView: UIViewControllerRepresentable {
     public func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
 }
 
-extension CameraView {
+extension CameraView2 {
     public class Coordinator: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraView
+        let parent: CameraView2
 
-        init(_ parent: CameraView) {
+        init(_ parent: CameraView2) {
             self.parent = parent
         }
 
