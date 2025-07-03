@@ -7,40 +7,34 @@ import UIKit
 /// サーバーからのメッセージ構造体
 struct WebSocketServerMessage: Codable {
     let type: String
+    let body: String?
     let count: Int?
-    let message: String?
-    let now: String?
-    let shouldTakePhoto: Bool?
-    let fixedEmoji: String?
-    let cameraId: String?
 }
 
 /// 写真データ送信用構造体
-struct PhotoUploadMessage: Codable {
-    let type: String
-    let deviceId: String
-    let photo: PhotoInfo
-    let emoji: String
-    let timestamp: Double
-}
+//struct PhotoUploadMessage: Codable {
+//    let type: String
+//    let photo: PhotoInfo
+//    let emoji: String
+//    let timestamp: Double
+//}
 
-struct PhotoInfo: Codable {
-    let data: String  // Base64エンコードされた画像データ
-    let width: Int
-    let height: Int
-    let timestamp: Double
-}
+//struct PhotoInfo: Codable {
+//    let data: String  // Base64エンコードされた画像データ
+//    let width: Int
+//    let height: Int
+//    let timestamp: Double
+//}
 
 /// 統合されたWebSocketカメラクライアント
 final class WebSocketCameraClient: NSObject, ObservableObject {
     
     // MARK: - Published Properties
     @Published var clientCount = 0
-    @Published var welcomeText = ""
-    @Published var serverTime = ""
     @Published var capturedImage: UIImage?
     @Published var isConnected = false
-    @Published var isFrozen = false
+//    @Published var isFrozen = false
+    @Published var cameraStatus = "start"
     @Published var currentEmoji = "😀"
     
     // MARK: - Publishers
@@ -58,11 +52,8 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     let cameraSession = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
     
-    // デバイス識別用
-    private let deviceId = "camera_\(Int.random(in: 1...4))"
-    
     // 撮影時の絵文字保存用
-    private var emojiAtCapture: String = ""
+    var emojiAtCapture: String = ""
     
     // MARK: - Initialization
     override init() {
@@ -132,8 +123,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     private func sendRoleMessage() {
         let roleDict: [String: String] = [
             "type": "role",
-            "body": "Player",
-            "deviceId": deviceId
+            "body": "Player"
         ]
         
         sendJSONMessage(roleDict)
@@ -212,20 +202,29 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         
         DispatchQueue.main.async {
             switch msg.type {
-            case "capture", "prepare_shoot":
-                self.handleCaptureMessage(msg)
-            case "shoot_complete":
-                self.handleShootComplete()
-            case "count":
-                if let count = msg.count {
-                    self.clientCount = count
-                }
-            case "message":
-                if let message = msg.message {
-                    self.welcomeText = message
-                }
-            default:
-                print("📨 Unhandled message type: \(msg.type)")
+                case "message":
+                    guard let body = msg.body else { return }
+                    switch body {
+                        case "capture":
+                            print("command capture")
+                            self.handleCaptureMessage(msg)
+                        case "stop":
+                            print("command stop")
+                            self.handleCaptureMessage(msg)
+                        case "start":
+                            print("command start")
+                            self.handleShootComplete()
+                        default:
+                            print("command default")
+                    }
+//                case "capture", "prepare_shoot":
+//                    self.handleCaptureMessage(msg)
+                case "count":
+                    if let count = msg.count {
+                        self.clientCount = count
+                    }
+                default:
+                    print("📨 Unhandled message type: \(msg.type)")
             }
         }
     }
@@ -238,41 +237,28 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     
     /// 撮影メッセージの処理
     private func handleCaptureMessage(_ msg: WebSocketServerMessage) {
-        let isPrimary = msg.shouldTakePhoto ?? false
-        let fixedEmoji = msg.fixedEmoji ?? currentEmoji
-        let targetCameraId = msg.cameraId
-        
-        // 自分が撮影対象かどうかを判定
-        let isMyTurn = targetCameraId == nil || targetCameraId == deviceId
-        
-        if isMyTurn && isPrimary {
-            // 自分が撮影担当
-            isFrozen = true
-            emojiAtCapture = fixedEmoji
-            currentEmoji = fixedEmoji
-            
-            print("📸 Primary camera - preparing to capture with emoji: \(fixedEmoji)")
-            captureTrigger.send((true, fixedEmoji))
-            
-            // 1秒後に撮影実行
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                self.capturePhoto()
-            }
-        } else {
-            // 他のカメラが撮影中 - 絵文字を固定
-            isFrozen = true
-            currentEmoji = fixedEmoji
-            
-            print("⏸️ Secondary camera - freezing emoji: \(fixedEmoji)")
-            captureTrigger.send((false, fixedEmoji))
+        guard let command = msg.body else { return }
+
+        switch command {
+        case "capture":
+            cameraStatus = "capture"
+            print("📸 capture command, freezing emoji: \(emojiAtCapture)")
+//            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+//                self.capturePhoto()
+//            }
+        case "stop":
+            cameraStatus = "stop"
+            print("⏸️ stop command, emoji frozen: \(emojiAtCapture)")
+        default:
+            print("💬 Received message: \(command)")
         }
     }
     
     /// 撮影完了の処理
     private func handleShootComplete() {
-        isFrozen = false
+        cameraStatus = "start"
         emojiAtCapture = ""
-        captureComplete.send()
+//        captureComplete.send()
         print("✅ Shoot complete - unfreezing emoji")
     }
     
@@ -280,7 +266,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     private func handleConnectionError() {
         isConnected = false
         webSocketTask = nil
-        
+
         // 3秒後に再接続を試行
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             print("🔄 Attempting to reconnect...")
@@ -315,7 +301,6 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         
 //        let uploadMessage = PhotoUploadMessage(
 //            type: "photo_upload",
-//            deviceId: deviceId,
 //            photo: photoInfo,
 //            emoji: emoji,
 //            timestamp: Date().timeIntervalSince1970
@@ -327,7 +312,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         let completionMessage: [String: Any] = [
             "type": "image",
             "body": [
-                "image": base64String,
+                "picture": base64String,
                 "emoji": emoji
             ]
         ]
