@@ -138,38 +138,58 @@ class WebSocketReceiver: ObservableObject {
 struct ControllerView: View {
     @StateObject var receiver = WebSocketReceiver()
     @State private var showImageView = false
-    @State private var showCloseConfirmation = false
-    
+    @State private var isButtonPressed = false
+
     var body: some View {
         ZStack {
+            // ✅ パステル背景画像を表示
+            Image("cam_bg") // ※ Assets に登録した画像名が "cam_bg" の場合
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
             if receiver.isConnected {
-                VStack(spacing: 20) {
-                    Text("アクティブなカメラ台数：\(receiver.count)")
+                VStack(spacing: 280) {
+                    Spacer()
+                    Text("Cameraction")
+                        .font(.system(size: 100, weight: .bold, design: .default))
+                        .foregroundColor(.white)
+                        .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
                     
-                    Button {
-                        receiver.sendMessage(type: "message", body: "setup")
-                    } label: {
-                        Text("疎通確認ぼたん")
+                    // ✅ 撮影スタートボタン（パステルピンク）
+                    Button(action: {
+                        isButtonPressed = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                            isButtonPressed = false
+                            receiver.sendMessage(type: "message", body: "setup")
+                            showImageView = true
+                        }
+                    }) {
+                        Text("撮影スタート！")
+                            .font(.title2)
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 80)
+                            .padding(.vertical, 20)
+                            .background(.white)
+                            .cornerRadius(24)
+                            .scaleEffect(isButtonPressed ? 0.95 : 1.0)
+                            .animation(.easeOut(duration: 0.2), value: isButtonPressed)
+                            .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
                     }
-                    
-                    Button {
-                        showImageView = true
-                        receiver.sendMessage(type: "message", body: "setup")
-                    } label: {
-                        Text("撮影スタート")
-                    }
-                    
-                    Text("サーバーからのメッセージ: \(receiver.message)")
-                        .padding()
+                    .padding(.horizontal, 40)
+
+                    Spacer()
                 }
-                .padding()
+                .padding(.top, 100)
                 .fullScreenCover(isPresented: $showImageView) {
                     ImageShowView(showImageView: $showImageView, receiver: receiver)
                 }
             } else {
                 ProgressView("サーバーに接続中…")
-                    .progressViewStyle(CircularProgressViewStyle())
+                    .foregroundColor(.white)
                     .padding()
+                    .background(Color.black.opacity(0.5))
+                    .cornerRadius(12)
             }
         }
         .onDisappear {
@@ -177,6 +197,7 @@ struct ControllerView: View {
         }
     }
 }
+
 
 
 

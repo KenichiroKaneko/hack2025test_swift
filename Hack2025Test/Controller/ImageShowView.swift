@@ -17,7 +17,7 @@ struct ImageShowView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color.white.ignoresSafeArea()
             VStack {
                 captureContainer
                     .padding(.vertical)
@@ -90,7 +90,9 @@ struct ImageShowView: View {
             .overlay(alignment: .bottom) {
                     Text("Cameraction")
                     .padding(.bottom, -100)
-                    .font(.system(size: 32, weight: .bold, design: .default))
+                    .font(.system(size: 50, weight: .bold, design: .default))
+                    .foregroundColor(.white)
+                    .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
             }
         }
     }
