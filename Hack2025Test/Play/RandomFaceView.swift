@@ -10,7 +10,11 @@ struct RandomFaceView: View {
     /// 顔文字
     @Binding var currentEmoji: String
     /// ランダムに表示したい顔文字の配列
-    private let texts: [String] = ["😅", "😄", "😘", "😜", "😫"]
+    private let texts: [String] = [
+        "😆", "😄", "😘", "😜", "😫", "🥹", "🫡", "🥰", "😡",
+        "🥱", "😱", "😢", "🙄", "😑", "☺️", "🤗", "😉", "😍",
+        "🥺", "🤣", "😋", "🥳"
+    ]
 
     /// タイマー：0.3秒ごとに発火
     private let timer = Timer.publish(every: 0.3, on: .main, in: .common).autoconnect()

@@ -27,7 +27,7 @@ struct PlayView2: View {
                 .sink { isCapture, emoji in
                     if isCapture {
                         print("capture emoji: " + emoji)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             client.capturePhoto()
                         }
                     } else {
