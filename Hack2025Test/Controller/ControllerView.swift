@@ -13,7 +13,7 @@ class WebSocketReceiver: ObservableObject {
     }
     
     func connect() {
-        let url = URL(string: "ws://172.20.10.3:8080")!
+        let url = URL(string: "ws://172.20.10.7:8080")!
         task = URLSession.shared.webSocketTask(with: url)
         task?.resume()
         
