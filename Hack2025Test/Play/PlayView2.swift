@@ -17,24 +17,24 @@ struct PlayView2: View {
                 
                 VStack {
                     Spacer()
-                    Button(action: {
-                        client.cameraStatus = "capture"
-                    }) {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 70, height: 70)
-                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
-                    }
-                    .padding(.bottom, 10)
-                    Button(action: {
-                        client.cameraStatus = "start"
-                    }) {
-                        Circle()
-                            .fill(Color.white)
-                            .frame(width: 70, height: 70)
-                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
-                    }
-                    .padding(.bottom, 10)
+//                    Button(action: {
+//                        client.cameraStatus = "capture"
+//                    }) {
+//                        Circle()
+//                            .fill(Color.white)
+//                            .frame(width: 70, height: 70)
+//                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
+//                    }
+//                    .padding(.bottom, 10)
+//                    Button(action: {
+//                        client.cameraStatus = "start"
+//                    }) {
+//                        Circle()
+//                            .fill(Color.white)
+//                            .frame(width: 70, height: 70)
+//                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
+//                    }
+//                    .padding(.bottom, 10)
 //                    Button(action: {
 //                        client.capturePhoto()
 //                    }) {
@@ -46,7 +46,7 @@ struct PlayView2: View {
 //                    .padding(.bottom, 10)
                 }
             }
-            RandomFaceView(cameraStatus: client.cameraStatus, currentEmoji: $currentEmoji)
+            RandomFaceView(cameraStatus: client.cameraStatus, currentEmoji: $client.currentEmoji)
                 .frame(maxWidth: .infinity, maxHeight: UIScreen.main.bounds.height / 2)
                 .background(Color.gray.opacity(0.2))
         }
@@ -57,11 +57,16 @@ struct PlayView2: View {
 
             // サーバーからキャプチャ命令を受け取ったら
             client.captureTrigger
-                .sink { _ in
-                    client.emojiAtCapture = self.currentEmoji
-                    print("capture emoji: " + self.currentEmoji)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                        client.capturePhoto()
+                .sink { isCapture, emoji in
+                    if isCapture {
+//                        client.emojiAtCapture = self.currentEmoji
+//                        print("capture emoji: " + self.currentEmoji)
+                        print("capture emoji: " + emoji)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                            client.capturePhoto()
+                        }
+                    } else {
+                        print("stop emoji: " + self.currentEmoji)
                     }
                 }
                 .store(in: &cancellables)
@@ -76,4 +81,3 @@ struct PlayView2_Previews: PreviewProvider {
         }
     }
 }
-

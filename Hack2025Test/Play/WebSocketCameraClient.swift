@@ -82,6 +82,15 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         }
 
         cameraSession.addInput(input)
+        
+        do {
+            try device.lockForConfiguration()
+            device.videoZoomFactor = 1.2
+            device.unlockForConfiguration()
+        } catch {
+            print("zoom setting error \(error)")
+        }
+        
         cameraSession.addOutput(output)
         cameraSession.commitConfiguration()
 
@@ -242,12 +251,15 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         switch command {
         case "capture":
             cameraStatus = "capture"
+            emojiAtCapture = currentEmoji
+            captureTrigger.send((true, emojiAtCapture))
             print("📸 capture command, freezing emoji: \(emojiAtCapture)")
 //            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
 //                self.capturePhoto()
 //            }
         case "stop":
             cameraStatus = "stop"
+            captureTrigger.send((false, emojiAtCapture))
             print("⏸️ stop command, emoji frozen: \(emojiAtCapture)")
         default:
             print("💬 Received message: \(command)")
@@ -285,10 +297,19 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     
     /// 撮影した写真をサーバーに送信
     private func sendPhotoToServer(_ image: UIImage, emoji: String) {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            print("❌ Failed to convert image to JPEG data")
+        // ✅ 中心から正方形に切り出し → 幅800pxにリサイズ → JPEG化
+        guard let square = image.croppedToSquare(),
+              let resized = square.resized(to: CGSize(width: 800, height: 800)),
+              let imageData = resized.jpegData(compressionQuality: 0.6) else {
+            print("❌ Failed to crop/resize/compress image")
             return
         }
+        
+//        guard let resized = image.resized(to: CGSize(width: 800, height: 800)) else {
+//            let imageData = image.jpegData(compressionQuality: 0.8)
+//            print("❌ Failed to convert image to JPEG data")
+//            return
+//        }
         
         let base64String = imageData.base64EncodedString()
         
@@ -319,7 +340,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         
         sendJSONMessage(completionMessage)
         
-        print("📤 Photo sent to server with emoji: \(emoji)")
+        print("📤 Photo sent to server with emoji: \(emoji), size: \(imageData.count / 1024) KB")
     }
     
     // MARK: - Cleanup
@@ -389,5 +410,30 @@ extension WebSocketCameraClient: AVCapturePhotoCaptureDelegate {
         }
         
         print("✅ Photo captured successfully")
+    }
+}
+
+
+extension UIImage {
+    /// 指定サイズにリサイズ
+    func resized(to targetSize: CGSize) -> UIImage? {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1  // @1xで出力してサイズ削減
+        let renderer = UIGraphicsImageRenderer(size: targetSize, format: format)
+        return renderer.image { _ in
+            self.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+    }
+
+    /// 中心から正方形にクロップ
+    func croppedToSquare() -> UIImage? {
+        let originalSize = self.size
+        let length = min(originalSize.width, originalSize.height)
+        let originX = (originalSize.width - length) / 2
+        let originY = (originalSize.height - length) / 2
+        let cropRect = CGRect(x: originX, y: originY, width: length, height: length)
+
+        guard let cgImage = self.cgImage?.cropping(to: cropRect) else { return nil }
+        return UIImage(cgImage: cgImage, scale: self.scale, orientation: self.imageOrientation)
     }
 }
