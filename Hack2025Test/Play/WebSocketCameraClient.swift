@@ -48,7 +48,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
                              delegateQueue: .main)
         configureCameraSession()
     }
-    
+
     // MARK: - Camera Configuration
     private func configureCameraSession() {
         cameraSession.beginConfiguration()
@@ -66,7 +66,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         }
 
         cameraSession.addInput(input)
-        
+
         do {
             try device.lockForConfiguration()
             device.videoZoomFactor = 1.2
@@ -74,36 +74,36 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         } catch {
             print("zoom setting error \(error)")
         }
-        
+
         cameraSession.addOutput(output)
         cameraSession.commitConfiguration()
 
         DispatchQueue.global(qos: .userInitiated).async {
             self.cameraSession.startRunning()
         }
-        
+
         print("✅ Camera configured successfully")
     }
-    
+
     // MARK: - WebSocket Connection
     /// サーバーに接続
     func connect() {
         guard webSocketTask == nil else { return }
-        guard let url = URL(string: "ws://172.20.10.3:8080") else {
+        guard let url = URL(string: "ws://172.20.10.7:8080") else {
             print("❌ Invalid WebSocket URL")
             return
         }
-        
+
         webSocketTask = session.webSocketTask(with: url)
         webSocketTask?.resume()
         print("➡️ WebSocket connection resumed")
-        
+
         // 役割をサーバーに送信
         sendRoleMessage()
         
         receiveLoop()
     }
-    
+
     /// 切断
     func disconnect() {
         webSocketTask?.cancel(with: .goingAway, reason: nil)
@@ -111,7 +111,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         isConnected = false
         print("🔌 WebSocket disconnected")
     }
-    
+
     /// 役割メッセージ送信
     private func sendRoleMessage() {
         let roleDict: [String: String] = [
@@ -121,7 +121,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         
         sendJSONMessage(roleDict)
     }
-    
+
     /// JSONメッセージ送信
     private func sendJSONMessage<T: Encodable>(_ message: T) {
         do {
@@ -139,7 +139,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             print("❌ Failed to encode message: \(error)")
         }
     }
-    
+
     /// 辞書形式のJSONメッセージ送信
     private func sendJSONMessage(_ dict: [String: Any]) {
         do {
@@ -171,7 +171,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             self?.receiveLoop()
         }
     }
-    
+
     /// 受信メッセージの処理
     private func handleReceivedMessage(_ message: URLSessionWebSocketTask.Message) {
         switch message {
@@ -183,7 +183,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             print("⚠️ Unknown message type received")
         }
     }
-    
+
     /// テキストメッセージの処理
     private func handleTextMessage(_ text: String) {
         guard let data = text.data(using: .utf8),
@@ -191,7 +191,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             print("⚠️ Failed to decode message: \(text)")
             return
         }
-        
+
         DispatchQueue.main.async {
             switch msg.type {
                 case "message":

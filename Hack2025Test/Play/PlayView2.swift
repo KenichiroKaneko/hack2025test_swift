@@ -15,7 +15,7 @@ struct PlayView2: View {
                 .clipped()
             RandomFaceView(cameraStatus: client.cameraStatus, currentEmoji: $client.currentEmoji)
                 .frame(maxWidth: .infinity, maxHeight: UIScreen.main.bounds.height / 2)
-                .background(Color.gray.opacity(0.2))
+                .background(backgroundColor(for: client.cameraStatus))
         }
         .edgesIgnoringSafeArea(.all)
         .onAppear {
@@ -27,7 +27,7 @@ struct PlayView2: View {
                 .sink { isCapture, emoji in
                     if isCapture {
                         print("capture emoji: " + emoji)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
                             client.capturePhoto()
                         }
                     } else {
@@ -41,7 +41,19 @@ struct PlayView2: View {
             client.disconnect()
             print("🔌 Disconnected WebSocket on back navigation")
         }
-
+    }
+    /// cameraStatusに応じたColorを返す
+    private func backgroundColor(for status: String) -> Color {
+        switch status {
+        case "start":
+            return Color(red: 0.8, green: 1.0, blue: 0.8)  // 淡い緑
+        case "capture":
+            return Color(red: 1.0, green: 0.8, blue: 0.8)  // 淡い赤
+        case "stop":
+            return Color(red: 0.9, green: 0.9, blue: 0.9)  // 淡いグレー
+        default:
+            return Color.white
+        }
     }
 }
 
