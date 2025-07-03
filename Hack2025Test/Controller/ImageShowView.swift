@@ -16,7 +16,6 @@ struct ImageShowView: View {
                 VStack {
                     LazyVGrid(columns: [GridItem(), GridItem()], spacing: 0) {
                         ForEach(receiver.images.indices, id: \.self) { index in
-                            
                             Image(uiImage: receiver.images[index])
                                 .resizable()
                                 .scaledToFit()
@@ -31,16 +30,13 @@ struct ImageShowView: View {
                                         .background(
                                             Circle()
                                                 .fill(Color.white)
-                                            
                                         )
-                                    
-                                    
                                 }
                         }
                     }
-                    .padding(64)
-                    
+                    .padding(.horizontal, 64)
                 }
+                Spacer()
                 Button("閉じる") {
                     showCloseConfirmation = true
                 }
@@ -51,6 +47,8 @@ struct ImageShowView: View {
         }
         .confirmationDialog("本当に閉じますか？", isPresented: $showCloseConfirmation) {
             Button("閉じる", role: .destructive) {
+                receiver.images = []
+                receiver.emojis = []
                 showImageView = false
             }
             Button("キャンセル", role: .cancel) {}
@@ -71,7 +69,7 @@ class DummyReceiver: WebSocketReceiver {
             UIImage(systemName: "heart")!
         ]
         self.emojis = [
-            "😍", "😳", "😭", "😮", "💖", "⭐️"
+            "😍", "😳", "😭", "😍", "😳", "😭"
         ]
     }
 }
