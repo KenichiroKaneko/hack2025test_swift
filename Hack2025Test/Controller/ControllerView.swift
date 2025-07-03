@@ -28,42 +28,80 @@ class WebSocketReceiver: ObservableObject {
 
     func listen() {
         task?.receive { [weak self] result in
-            print("receive: \(result)")
+            guard let self = self else { return }
+
             switch result {
             case .success(.string(let str)):
-                if let data = str.data(using: .utf8),
-                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                self.handleJSONString(str)
 
-                    if let count = json["count"] as? Int {
-                        DispatchQueue.main.async {
-                            self?.count = count
-                        }
-                    }
-                    
-                    if let message = json["body"] as? String {
-                        DispatchQueue.main.async {
-                            self?.message = message
-                        }
-                    }
-
-                    if let base64Image = json["image"] as? String,
-                       let imageData = Data(base64Encoded: base64Image),
-                       let uiImage = UIImage(data: imageData) {
-                        DispatchQueue.main.async {
-                            self?.images.append(uiImage)
-                        }
-                    }
+            case .success(.data(let data)):
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    self.handleJSONString(jsonString)
+                } else {
+                    print("⚠️ .dataメッセージのデコードに失敗（utf8変換）")
                 }
 
             case .failure(let error):
-                print("受信エラー: \(error)")
+                print("❌ 受信エラー: \(error)")
+
             default:
                 break
             }
 
-            self?.listen()
+            self.listen()
         }
     }
+
+    
+    private func handleJSONString(_ str: String) {
+        guard let data = str.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let type = json["type"] as? String else {
+            print("⚠️ JSON解析に失敗")
+            return
+        }
+
+        switch type {
+        case "message":
+            if let message = json["body"] as? String {
+                print("📩 メッセージ受信: \(message)")
+                DispatchQueue.main.async {
+                    self.message = message
+                }
+            }
+
+        case "role":
+            if let role = json["body"] as? String {
+                print("🎭 ロール受信: \(role)")
+            }
+
+        case "count":
+            if let count = json["body"] as? Int {
+                print("👥 接続台数: \(count)")
+                DispatchQueue.main.async {
+                    self.count = count
+                }
+            }
+
+        case "image":
+            if let body = json["body"] as? [String: Any],
+               let base64Image = body["picture"] as? String,
+               let imageData = Data(base64Encoded: base64Image),
+               let uiImage = UIImage(data: imageData) {
+                print("🖼️ 画像受信成功（\(imageData.count) bytes）")
+                DispatchQueue.main.async {
+                    self.images.append(uiImage)
+                }
+            } else {
+                print("⚠️ imageタイプのbodyが不正または画像デコード失敗")
+            }
+
+        default:
+            print("⚠️ 未知のtype: \(type)")
+        }
+    }
+
+
 
     func sendMessage(type: String, body: String) {
         let payload: [String: Any] = [
@@ -96,14 +134,14 @@ struct ControllerView: View {
                     Text("アクティブなカメラ台数：\(receiver.count)")
 
                     Button {
-                        receiver.sendMessage(type: "message", body: "はじまったよ")
+                        receiver.sendMessage(type: "message", body: "setup")
                     } label: {
                         Text("疎通確認ぼたん")
                     }
 
                     Button {
                         showImageView = true
-                        receiver.sendMessage(type: "message", body: "はじまったよ")
+                        receiver.sendMessage(type: "message", body: "setup")
                     } label: {
                         Text("撮影スタート")
                     }
