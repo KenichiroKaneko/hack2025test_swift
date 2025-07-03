@@ -1,56 +1,3 @@
-//
-//  RandomFaceView.swift
-//  Hack2025Test
-//
-//  Created by Sora Tanaka on 2025/07/02.
-//
-
-//import SwiftUI
-//
-//struct RandomFaceView: View {
-//    let isFrozen: Bool
-//    // ランダムに表示したい文字列の配列
-//    private let texts = [
-//        "😅",
-//        "😄",
-//        "😘",
-//        "😜",
-//        "😫"
-//    ]
-//    
-//    // 現在表示中の文字列
-//    @State private var currentText: String = ""
-//    // タイマー：1秒ごとに発火
-//    private let timer = Timer.publish(every: 0.3, on: .main, in: .common)
-//                             .autoconnect()
-//    
-//    var body: some View {
-//        GeometryReader { geo in
-//            Text(currentText)
-//                // フォントサイズは画面サイズに応じて調整
-//                .font(.system(size: max(geo.size.width, geo.size.height) * 0.8))
-//                .frame(width: geo.size.width, height: geo.size.height)
-//                .multilineTextAlignment(.center)
-//                .onAppear {
-//                    currentText = texts.randomElement() ?? ""
-//                }
-//                .onReceive(timer) { _ in
-////                    currentText = texts.randomElement() ?? ""
-//                    if !isFrozen {
-//                        currentText = texts.randomElement()!
-//                    }
-//                }
-//        }
-//        .edgesIgnoringSafeArea(.all)
-//    }
-//}
-//
-//struct RandomFaceView_Previews: PreviewProvider {
-//    static var previews: some View {
-//        RandomFaceView(isFrozen: false)
-//    }
-//}
-
 // RandomFaceView.swift
 // Hack2025Test
 
@@ -97,4 +44,3 @@ struct RandomFaceView_Previews: PreviewProvider {
         RandomFaceView(cameraStatus: "start", currentEmoji: .constant("😅"))
     }
 }
-

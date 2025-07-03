@@ -10,42 +10,9 @@ struct PlayView2: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ZStack {
-                CameraPreviewView2(session: client.cameraSession)
-                    .frame(height: UIScreen.main.bounds.height / 2)
-                    .clipped()
-                
-                VStack {
-                    Spacer()
-//                    Button(action: {
-//                        client.cameraStatus = "capture"
-//                    }) {
-//                        Circle()
-//                            .fill(Color.white)
-//                            .frame(width: 70, height: 70)
-//                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
-//                    }
-//                    .padding(.bottom, 10)
-//                    Button(action: {
-//                        client.cameraStatus = "start"
-//                    }) {
-//                        Circle()
-//                            .fill(Color.white)
-//                            .frame(width: 70, height: 70)
-//                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
-//                    }
-//                    .padding(.bottom, 10)
-//                    Button(action: {
-//                        client.capturePhoto()
-//                    }) {
-//                        Circle()
-//                            .fill(Color.white)
-//                            .frame(width: 70, height: 70)
-//                            .overlay(Circle().stroke(Color.black, lineWidth: 2))
-//                    }
-//                    .padding(.bottom, 10)
-                }
-            }
+            CameraPreviewView2(session: client.cameraSession)
+                .frame(height: UIScreen.main.bounds.height / 2)
+                .clipped()
             RandomFaceView(cameraStatus: client.cameraStatus, currentEmoji: $client.currentEmoji)
                 .frame(maxWidth: .infinity, maxHeight: UIScreen.main.bounds.height / 2)
                 .background(Color.gray.opacity(0.2))
@@ -59,8 +26,6 @@ struct PlayView2: View {
             client.captureTrigger
                 .sink { isCapture, emoji in
                     if isCapture {
-//                        client.emojiAtCapture = self.currentEmoji
-//                        print("capture emoji: " + self.currentEmoji)
                         print("capture emoji: " + emoji)
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                             client.capturePhoto()
@@ -71,6 +36,12 @@ struct PlayView2: View {
                 }
                 .store(in: &cancellables)
         }
+        .onDisappear {
+            // ナビゲーションの「戻る」ボタンで画面を離れるときに呼ばれる
+            client.disconnect()
+            print("🔌 Disconnected WebSocket on back navigation")
+        }
+
     }
 }
 

@@ -11,21 +11,6 @@ struct WebSocketServerMessage: Codable {
     let count: Int?
 }
 
-/// 写真データ送信用構造体
-//struct PhotoUploadMessage: Codable {
-//    let type: String
-//    let photo: PhotoInfo
-//    let emoji: String
-//    let timestamp: Double
-//}
-
-//struct PhotoInfo: Codable {
-//    let data: String  // Base64エンコードされた画像データ
-//    let width: Int
-//    let height: Int
-//    let timestamp: Double
-//}
-
 /// 統合されたWebSocketカメラクライアント
 final class WebSocketCameraClient: NSObject, ObservableObject {
     
@@ -33,7 +18,6 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     @Published var clientCount = 0
     @Published var capturedImage: UIImage?
     @Published var isConnected = false
-//    @Published var isFrozen = false
     @Published var cameraStatus = "start"
     @Published var currentEmoji = "😀"
     
@@ -181,7 +165,6 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             switch result {
             case .failure(let error):
                 print("⚠️ Receive error: \(error)")
-                self?.handleConnectionError()
             case .success(let message):
                 self?.handleReceivedMessage(message)
             }
@@ -226,8 +209,6 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
                         default:
                             print("command default")
                     }
-//                case "capture", "prepare_shoot":
-//                    self.handleCaptureMessage(msg)
                 case "count":
                     if let count = msg.count {
                         self.clientCount = count
@@ -254,9 +235,6 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             emojiAtCapture = currentEmoji
             captureTrigger.send((true, emojiAtCapture))
             print("📸 capture command, freezing emoji: \(emojiAtCapture)")
-//            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-//                self.capturePhoto()
-//            }
         case "stop":
             cameraStatus = "stop"
             captureTrigger.send((false, emojiAtCapture))
@@ -272,18 +250,6 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
         emojiAtCapture = ""
 //        captureComplete.send()
         print("✅ Shoot complete - unfreezing emoji")
-    }
-    
-    /// 接続エラーの処理
-    private func handleConnectionError() {
-        isConnected = false
-        webSocketTask = nil
-
-        // 3秒後に再接続を試行
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-            print("🔄 Attempting to reconnect...")
-            self.connect()
-        }
     }
     
     // MARK: - Photo Capture
@@ -304,31 +270,9 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
             print("❌ Failed to crop/resize/compress image")
             return
         }
-        
-//        guard let resized = image.resized(to: CGSize(width: 800, height: 800)) else {
-//            let imageData = image.jpegData(compressionQuality: 0.8)
-//            print("❌ Failed to convert image to JPEG data")
-//            return
-//        }
-        
+
         let base64String = imageData.base64EncodedString()
-        
-//        let photoInfo = PhotoInfo(
-//            data: base64String,
-//            width: Int(image.size.width),
-//            height: Int(image.size.height),
-//            timestamp: Date().timeIntervalSince1970
-//        )
-        
-//        let uploadMessage = PhotoUploadMessage(
-//            type: "photo_upload",
-//            photo: photoInfo,
-//            emoji: emoji,
-//            timestamp: Date().timeIntervalSince1970
-//        )
-//        
-//        sendJSONMessage(uploadMessage)
-        
+
         // 撮影完了をサーバーに通知
         let completionMessage: [String: Any] = [
             "type": "image",
@@ -375,13 +319,6 @@ extension WebSocketCameraClient: URLSessionWebSocketDelegate {
         }
         
         webSocketTask = nil
-        
-        // エラーが発生した場合、自動再接続を試行
-        if error != nil {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                self.connect()
-            }
-        }
     }
 }
 
@@ -427,13 +364,21 @@ extension UIImage {
 
     /// 中心から正方形にクロップ
     func croppedToSquare() -> UIImage? {
-        let originalSize = self.size
-        let length = min(originalSize.width, originalSize.height)
-        let originX = (originalSize.width - length) / 2
-        let originY = (originalSize.height - length) / 2
-        let cropRect = CGRect(x: originX, y: originY, width: length, height: length)
-
-        guard let cgImage = self.cgImage?.cropping(to: cropRect) else { return nil }
-        return UIImage(cgImage: cgImage, scale: self.scale, orientation: self.imageOrientation)
+        guard let cg = self.cgImage else { return nil }
+            // cgImage のピクセル幅・高さを取得
+            let pixelWidth  = cg.width
+            let pixelHeight = cg.height
+            let length = min(pixelWidth, pixelHeight)
+            let originX = (pixelWidth  - length) / 2
+            let originY = (pixelHeight - length) / 2
+            let cropRect = CGRect(x: originX,
+                                  y: originY,
+                                  width: length,
+                                  height: length)
+            guard let cropped = cg.cropping(to: cropRect) else { return nil }
+            // scale と orientation を元のまま引き継ぐ
+            return UIImage(cgImage: cropped,
+                           scale: self.scale,
+                           orientation: self.imageOrientation)
     }
 }
