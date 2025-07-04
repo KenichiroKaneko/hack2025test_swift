@@ -89,7 +89,7 @@ final class WebSocketCameraClient: NSObject, ObservableObject {
     /// サーバーに接続
     func connect() {
         guard webSocketTask == nil else { return }
-        guard let url = URL(string: "ws://172.20.10.7:8080") else {
+        guard let url = URL(string: "ws://192.168.152.180:8080") else {
             print("❌ Invalid WebSocket URL")
             return
         }
